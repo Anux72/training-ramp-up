@@ -1,5 +1,40 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src"
+  "sourceRoot": "apps/rampup-backend/src",
+  "monorepo": true,
+  "root": "apps/rampup-backend",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/rampup-backend/tsconfig.app.json"
+  },
+  "projects": {
+    "rampup-backend": {
+      "type": "application",
+      "root": "apps/rampup-backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/rampup-backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/rampup-backend/tsconfig.app.json"
+      }
+    },
+    "student-crud": {
+      "type": "application",
+      "root": "apps/student-crud",
+      "entryFile": "main",
+      "sourceRoot": "apps/student-crud/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/student-crud/tsconfig.app.json"
+      }
+    },
+    "student-actions": {
+      "type": "application",
+      "root": "apps/student-actions",
+      "entryFile": "main",
+      "sourceRoot": "apps/student-actions/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/student-actions/tsconfig.app.json"
+      }
+    }
+  }
 }
