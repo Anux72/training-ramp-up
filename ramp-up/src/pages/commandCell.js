@@ -1,5 +1,10 @@
 import * as React from "react";
-export const commands = props => {
+import { addStudent } from "../Redux/StudentOperations";
+import { useDispatch } from "react-redux";
+
+
+
+export const Commands = props => {
     const {
         dataItem
     } = props;
