@@ -4,7 +4,8 @@ import "@progress/kendo-theme-default/dist/all.css";
 import { Grid, GridColumn, GridToolbar } from "@progress/kendo-react-grid";
 import { useEffect, useState } from "react";
 import { Commands } from "./pages/commandCell";
-
+import { useQuery, gql, rewriteURIForGET, useMutation } from "@apollo/client";
+import { STUDENT_ADD_MUTATION, STUDENT_GET_QUERY } from "./gql/resolvers";
 
 import {
   insertStudent,
@@ -15,14 +16,21 @@ import {
 
 const editField = "inEdit";
 
+
 function App() {
-  const [data, setData] = useState([]);
-  
+  const [stdData, setStdData] = useState([]);
+  const { loading, error, data } = useQuery(STUDENT_GET_QUERY);  
+  const [addStudent, {data: newStdData }] = useMutation(STUDENT_ADD_MUTATION)
 
   useEffect(() => {
     let newStudents = getStudents();
-    setData(newStudents);
+    setStdData(newStudents);
   }, []);
+
+  if (loading) return "Loading... ";
+  if (error) return console.log(error.message);
+
+  console.log(data);
 
   const commandCell = (props) => {
     return (
@@ -41,7 +49,7 @@ function App() {
 
   //CRUD OPERATIONS
   const Edit = (studentData) => {
-    let newData = data.map((student) =>
+    let newData = data.getAllStudents.map((student) =>
       student.Student_id === studentData.Student_id
         ? {
             ...student,
@@ -49,65 +57,67 @@ function App() {
           }
         : student
     );
-    setData(newData);
+    setStdData(newData);
   };
 
   const Add = (student) => {
     student.inEdit = true;
     const newData = insertStudent(student);
-    setData(newData);
+    setStdData(newData);
   };
 
   const Remove = (student) => {
     const newData = [...deleteStudent(student)];
-    setData(newData);
+    setStdData(newData);
   };
   const update = (student) => {
     student.inEdit = false;
     const newData = updateStudent(student);
-    setData(newData);
+    setStdData(newData);
   };
 
   const Discard = () => {
     const newData = [...data];
     newData.splice(0, 1);
-    setData(newData);
+    setStdData(newData);
   };
   const cancel = (student) => {
     const StudentoriginalData = getStudents().find(
       (S) => S.Student_id === student.Student_id
     );
-    const newData = data.map((Student) =>
+    const newData = data.getAllStudents.map((Student) =>
       Student.Student_id === StudentoriginalData.Student_id
         ? StudentoriginalData
         : Student
     );
-    setData(newData);
+    setStdData(newData);
   };
 
   const AddNewStudent = () => {
     const newStudentData = {
       inEdit: true,
     };
-    setData([newStudentData, ...data]);
+    setStdData([newStudentData, ...stdData]);
   };
 
   const itemChange = (event) => {
     const field = event.field || "";
-    const newData = data.map((student) =>
+    const newData = data.getAllStudents.map((student) =>
       student.Student_id === event.dataItem.Student_id
         ? { ...student, [field]: event.value }
         : student
     );
-    setData(newData);
+    setStdData(newData);
   };
 
   return (
     <div>
       <h1>Student Records</h1>
+      
+      
       {/* Initializing the Grid */}
       <Grid
-        data={data}
+        data={data.getAllStudents}
         editField={editField}
         onItemChange={itemChange}
         dataItemKey={"Student_id"}
@@ -122,17 +132,17 @@ function App() {
           </button>
         </GridToolbar>
         <GridColumn field="Student_id" title="ID" editable={false} />
-        <GridColumn field="Student_name" title="Name" />
-        <GridColumn field="Student_gender" title="Gender" />
-        <GridColumn field="Student_address" title="Address" />
-        <GridColumn field="Student_mobile" title="Mobile No" editor="numeric" />
+        <GridColumn field="name" title="Name" />
+        <GridColumn field="gender" title="Gender" />
+        <GridColumn field="address" title="Address" />
+        <GridColumn field="mobileNo" title="Mobile No" editor="numeric" />
         <GridColumn
-          field="Student_DOB"
+          field="DOB"
           title="Date of Birth"
           editor="date"
           format="{0:d}"
         />
-        <GridColumn field="Student_age" title="Age" editor="numeric" />
+        <GridColumn field="age" title="Age" editor="numeric" />
         <GridColumn cell={commandCell} title="Command" width={"240px"} />
       </Grid>
     </div>
