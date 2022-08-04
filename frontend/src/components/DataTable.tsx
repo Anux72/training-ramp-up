@@ -5,75 +5,87 @@ import {
   GridItemChangeEvent,
   GridToolbar,
 } from '@progress/kendo-react-grid';
-
-import * as React from 'react';
-
+import '@progress/kendo-theme-default/dist/all.css';
+import { useEffect, useRef, useState } from 'react';
 import { Student } from '../interfaces/interfaces';
 import MyCommandCell from './MyCommandCell';
-import {
-  deleteItem,
-  getItems,
-  insertItem,
-  updateItem,
-} from '../services/services';
-import { useState, useEffect } from 'react';
 
 const editField: string = 'inEdit';
 
 const DataTable = () => {
+  const mount = useRef(false);
+  const API_URL = 'http://localhost:5000/student/';
   const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
-    let newItems = getItems();
-    setData(newItems);
+    if (!mount.current) {
+      getItems();
+    }
+
+    return () => {
+      mount.current = true;
+    };
   }, []);
 
   // modify the data in the store, db etc
-  const remove = (dataItem: Student) => {
-    const newData = [...deleteItem(dataItem)];
-    setData(newData);
+  const remove = async (dataItem: Student) => {
+    await fetch(API_URL + dataItem.id, {
+      method: 'DELETE',
+    });
+    getItems();
   };
 
-  const add = (dataItem: Student) => {
-    dataItem.inEdit = true;
-
-    const newData = [...insertItem(dataItem)];
-    setData(newData);
-  };
-
-  const update = (dataItem: Student) => {
+  const add = async (dataItem: Student) => {
     dataItem.inEdit = false;
-    const newData = [...updateItem(dataItem)];
-    setData(newData);
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(dataItem),
+      headers: {
+        'Content-type': 'application/json',
+      },
+    });
+    getItems();
+  };
+
+  const update = async (dataItem: Student) => {
+    dataItem.inEdit = false;
+    await fetch(API_URL + dataItem.id, {
+      method: 'PATCH',
+      body: JSON.stringify(dataItem),
+      headers: {
+        'Content-type': 'application/json',
+      },
+    });
+
+    getItems();
   };
 
   // Local state operations
-  const discard = () => {
+  const discard = async () => {
     const newData = [...data];
     newData.splice(0, 1);
     setData(newData);
   };
 
   const cancel = (dataItem: Student) => {
-    const originalItem = getItems().find((p) => p.ID === dataItem.ID);
-    const newData = data.map((item) =>
-      item.ID === originalItem?.ID ? originalItem : item
-    );
-
-    setData(newData);
+    const id = dataItem.id;
+    dataItem.inEdit = false;
+    const filteredArry = data.filter((obj: Student) => obj.id !== id);
+    filteredArry.unshift(dataItem);
+    setData(filteredArry);
   };
 
   const enterEdit = (dataItem: Student) => {
     setData(
       data.map((item) =>
-        item.ID === dataItem.ID ? { ...item, inEdit: true } : item
+        item.id === dataItem.id ? { ...item, inEdit: true } : item
       )
     );
   };
 
   const itemChange = (event: GridItemChangeEvent) => {
     const newData = data.map((item) =>
-      item.ID === event.dataItem.ID
+      item.id === event.dataItem.id
         ? { ...item, [event.field || '']: event.value }
         : item
     );
@@ -83,7 +95,6 @@ const DataTable = () => {
 
   const addNew = () => {
     const newDataItem = { inEdit: true };
-
     setData([newDataItem, ...data]);
   };
 
@@ -100,6 +111,20 @@ const DataTable = () => {
     />
   );
 
+  const getItems = async () => {
+    let student: Student[] = [];
+
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error('Something went wrong!');
+    const data = await response.json();
+    student = data.map((obj: any) => {
+      const dateOfBirth = new Date(obj.dateOfBirth);
+
+      return { ...obj, dateOfBirth };
+    });
+    setData(student);
+  };
+
   return (
     <Grid data={data} onItemChange={itemChange} editField={editField}>
       <GridToolbar>
@@ -111,19 +136,18 @@ const DataTable = () => {
           Add new
         </button>
       </GridToolbar>
-      <GridColumn field='ID' title='Id' editable={false} />
-      <GridColumn field='Name' title='Name' width='250px' />
-      <GridColumn field='Gender' title='Gender' />
-      <GridColumn field='Address' title='Address' width='250px' />
-      <GridColumn field='MobileNo' title='MobileNo' />
+      <GridColumn field='name' title='Name' width='200px' />
+      <GridColumn field='gender' title='Gender' />
+      <GridColumn field='address' title='Address' width='200px' />
+      <GridColumn field='mobileNo' title='MobileNo' />
       <GridColumn
-        field='DateOfBirth'
+        field='dateOfBirth'
         title='Date Of Birth'
         editor='date'
         format='{0:d}'
         width='150px'
       />
-      <GridColumn field='Age' title='Age' editor='numeric' />
+      <GridColumn field='age' title='Age' editor='numeric' />
       {/* <GridColumn field='Discontinued' title='Discontinued' editor='boolean' /> */}
       <GridColumn cell={CommandCell} title='Commands' width='200px' />
     </Grid>
