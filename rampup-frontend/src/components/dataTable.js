@@ -12,29 +12,20 @@ import {
 } from "../services/services";
 import { useQuery, gql } from "@apollo/client";
 import { ActionCell } from "./actionCell";
-// {
-//     students {
-//         stuID
-//         name
-//         gender
-//         address
-//         phone
-//         dob
-//     }
-// }
 
-//used dummy data for demo
-const FILMS_QUERY = gql`
-    {
-        launchesPast(limit: 10) {
+const FETCH_STUDENTS = gql`
+    query {
+        getAllStudents {
             id
-            mission_name
+            studentName
+            address
+            phone
         }
     }
 `;
 
 const DataTable = () => {
-    const { data, loading, error } = useQuery(FILMS_QUERY);
+    const { data, loading, error } = useQuery(FETCH_STUDENTS);
     const [datau, setData] = useState([]);
 
     useEffect(() => {
@@ -122,9 +113,10 @@ const DataTable = () => {
             style={{
                 height: "80vh",
             }}
-            data={data.launchesPast}
+            data={datau}
             onItemChange={itemChange}
             editField={"inEdit"}>
+            {console.log(data)}
             <GridToolbar>
                 <button
                     title="Add new"
@@ -133,19 +125,19 @@ const DataTable = () => {
                     Add new
                 </button>
             </GridToolbar>
-            <Column field="id" title="ID" editable={false} />
-            <Column field="mission_name" title="Name" />
-            {/* <Column field="gender" title="Gender" />
-                <Column field="address" title="Address" />
-                <Column field="phone" title="Mobile No" />
-                <Column
-                    field="dob"
-                    title="Date of Birth"
-                    editor="date"
-                    format="{0:d}"
-                />
-                <Column field="age" title="Age" editor="numeric" />
-                <Column cell={funcCell} width="200px" /> */}
+            <Column field="stuID" title="ID" editable={false} />
+            <Column field="StudentName" title="Name" />
+            <Column field="gender" title="Gender" />
+            <Column field="address" title="Address" />
+            <Column field="phone" title="Mobile No" />
+            <Column
+                field="dob"
+                title="Date of Birth"
+                editor="date"
+                format="{0:d}"
+            />
+            <Column field="age" title="Age" editor="numeric" />
+            <Column cell={funcCell} width="200px" />
         </Grid>
     );
 };

@@ -18,15 +18,6 @@
         "tsConfigPath": "apps/rampup-backend/tsconfig.app.json"
       }
     },
-    "student-crud": {
-      "type": "application",
-      "root": "apps/student-crud",
-      "entryFile": "main",
-      "sourceRoot": "apps/student-crud/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/student-crud/tsconfig.app.json"
-      }
-    },
     "student-actions": {
       "type": "application",
       "root": "apps/student-actions",

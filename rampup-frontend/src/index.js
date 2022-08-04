@@ -4,10 +4,8 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
 
-const dataPath = "http://localhost:5000";
-
 const client = new ApolloClient({
-    uri: "https://api.spacex.land/graphql/",
+    uri: "http://localhost:5000/graphql",
     cache: new InMemoryCache(),
 });
 
