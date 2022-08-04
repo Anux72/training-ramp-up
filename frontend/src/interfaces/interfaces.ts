@@ -7,6 +7,7 @@ export interface Student {
     dateOfBirth: Date;
     age: number;
     inEdit: boolean;
+    isArchive: boolean;
 
 }
 

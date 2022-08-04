@@ -11,6 +11,7 @@ type Student {
   dateOfBirth: DateTime!
   inEdit: Boolean!
   age: Int!
+  isArchive: Boolean!
 }
 
 """
@@ -19,5 +20,35 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type Query {
-  findAll: Student!
+  getAllStudents: [Student!]!
+  getStudent(id: String!): [Student!]!
+}
+
+type Mutation {
+  deleteStudent(id: String!): Student!
+  createStudent(studentCreateDto: StudentCreateDto!): Student!
+  updateStudent(updateStudentDto: UpdateStudentDto!): Student!
+}
+
+input StudentCreateDto {
+  name: String!
+  gender: String!
+  address: String!
+  mobileNo: String!
+  dateOfBirth: DateTime!
+  inEdit: Boolean!
+  age: Int!
+  isArchive: Boolean!
+}
+
+input UpdateStudentDto {
+  id: String!
+  name: String!
+  gender: String!
+  address: String!
+  mobileNo: String!
+  dateOfBirth: DateTime!
+  inEdit: Boolean!
+  age: Int!
+  isArchive: Boolean!
 }

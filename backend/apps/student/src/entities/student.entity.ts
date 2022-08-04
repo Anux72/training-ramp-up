@@ -2,7 +2,7 @@ import { Field, Int, ObjectType } from "@nestjs/graphql";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @ObjectType()
-@Entity()
+@Entity() //use for query
 export class Student {
     // type definitions
     @Field()
@@ -36,5 +36,9 @@ export class Student {
     @Field(type => Int)
     @Column()
     age: number;
+
+    @Field()
+    @Column()
+    isArchive: boolean;
 
 }
