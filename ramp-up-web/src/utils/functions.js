@@ -42,8 +42,7 @@ export const getAge = (date) => {
 
 export const birthdayChange = (value, dataItem) => {
   const { entries } = store.getState();
-  const birthdate = getBirthday(value);
-  const age = getAge(birthdate);
+  const age = getAge(value);
   const newEntry = entries.map((entry) =>
     entry.id === dataItem.id
       ? { ...entry, ["birthday"]: value, ["age"]: age }

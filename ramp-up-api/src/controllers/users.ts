@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import * as crypto from "crypto";
 import * as jwt from "jsonwebtoken";
 import * as userService from "../services/users";
+import { validateToken } from "../utils/functions";
 
 export const addUser = async (req: Request, res: Response) => {
   const { username, password, role } = req.body.payload;
@@ -70,34 +71,29 @@ export const getUser = async (req: Request, res: Response) => {
             )
           ) {
             let role = "";
-            try {
-              const payload = jwt.verify(
-                userData.token,
-                process.env.TOKEN_KEY as string
-              );
+            const payload = validateToken(userData, res, false);
+            if (payload != null) {
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               role = payload.role;
-            } catch (e) {
-              console.log(e);
-            }
-            userData.token = jwt.sign(
-              {
-                userName: username,
-                password: userData.password,
-                role: role,
-                loggedIn: true,
-              },
-              process.env.TOKEN_KEY as string,
-              {
-                expiresIn: "2h",
+              userData.token = jwt.sign(
+                {
+                  userName: username,
+                  password: userData.password,
+                  role: role,
+                  loggedIn: true,
+                },
+                process.env.TOKEN_KEY as string,
+                {
+                  expiresIn: "2h",
+                }
+              );
+              try {
+                await userService.updateUser(username, userData);
+                res.send({ ...userData, role: role });
+              } catch (err) {
+                res.send({ error: "Could not sign in" });
               }
-            );
-            try {
-              await userService.updateUser(username, userData);
-              res.send({ ...userData, role: role });
-            } catch (err) {
-              res.send({ error: "Could not sign in" });
             }
           } else {
             res.send({ error: "Incorrect password" });
@@ -117,25 +113,7 @@ export const refreshUser = async (req: Request, res: Response) => {
     res.status(400).send({ token: (userData as Error).message, status: 400 });
   } else {
     if (userData) {
-      try {
-        const payload = jwt.verify(
-          userData.token,
-          process.env.TOKEN_KEY as string
-        );
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (Date.now() >= payload.exp * 1000) {
-          res.status(400).send({ token: "Token has expired", status: 400 });
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-        } else if (!payload.loggedIn) {
-          res.status(400).send({ token: "User has signed out", status: 400 });
-        } else {
-          res.status(200).send({ token: userData.token, status: 200 });
-        }
-      } catch (err) {
-        res.status(400).send({ token: "Invalid Token", status: 400 });
-      }
+      validateToken(userData, res, true);
     }
   }
 };
@@ -147,27 +125,26 @@ export const signOutUser = async (req: Request, res: Response) => {
     res.status(400).send({ error: (userData as Error).message });
   } else {
     if (userData) {
-      const payload = jwt.verify(
-        userData.token,
-        process.env.TOKEN_KEY as string
-      );
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const role = payload.role;
-      userData.token = jwt.sign(
-        {
-          userName: userName,
-          password: userData.password,
-          role: role,
-          loggedIn: false,
-        },
-        process.env.TOKEN_KEY as string
-      );
-      try {
-        await userService.updateUser(userName, userData);
-        res.status(400).send({ error: "User signed out" });
-      } catch (err) {
-        res.status(400).send({ error: "Error signing out user" });
+      const payload = validateToken(userData, res, false);
+      if (payload != null) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const role = payload.role;
+        userData.token = jwt.sign(
+          {
+            userName: userName,
+            password: userData.password,
+            role: role,
+            loggedIn: false,
+          },
+          process.env.TOKEN_KEY as string
+        );
+        try {
+          await userService.updateUser(userName, userData);
+          res.status(400).send({ error: "User signed out" });
+        } catch (err) {
+          res.status(400).send({ error: "Error signing out user" });
+        }
       }
     }
   }

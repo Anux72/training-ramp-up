@@ -75,7 +75,6 @@ function* workAddStudent(entry) {
   const socket = io.connect(URL);
   delete insertingEntry.inEdit;
   delete insertingEntry.new;
-  console.log(insertingEntry);
   yield put(actions.addUpdatingEntry(null));
   yield put(actions.addChangingEntry(null));
   const response = yield call(() => addStudent(insertingEntry, token));

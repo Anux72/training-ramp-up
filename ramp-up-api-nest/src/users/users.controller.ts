@@ -6,6 +6,7 @@ import * as jwt from 'jsonwebtoken';
 import { UserDto } from '../dto/user.dto';
 import { validatorDto } from '../utils/dtoValidator';
 import { ConfigService } from '@nestjs/config';
+import { validateToken } from '../utils/functions';
 
 @Controller('users')
 export class UsersController {
@@ -90,30 +91,35 @@ export class UsersController {
               )
             ) {
               let role = '';
-              try {
-                const payload = jwt.verify(userData.token, key);
+              const payload = validateToken(userData, res, false);
+              if (payload != null) {
                 role = payload.role;
-              } catch (e) {
-                console.log(e);
-              }
-              userData.token = jwt.sign(
-                {
-                  userName: username,
-                  password: userData.password,
-                  role: role,
-                  loggedIn: true,
-                },
-                key,
-                {
-                  expiresIn: '2h',
-                },
-              );
-              try {
-                await this.usersService.updateUser(username, userData);
-                res.status(200).send({ ...userData, role: role });
-              } catch (err) {
-                console.log(err);
-                res.status(400).send({ error: 'Could not sign in' });
+                userData.token = jwt.sign(
+                  {
+                    userName: username,
+                    password: userData.password,
+                    role: role,
+                    loggedIn: true,
+                  },
+                  key,
+                  {
+                    expiresIn: '2h',
+                  },
+                );
+                try {
+                  await validatorDto(UserDto, userData);
+                  try {
+                    await this.usersService.updateUser(username, userData);
+                    res.status(200).send({ ...userData, role: role });
+                  } catch (err) {
+                    console.log(err);
+                    res.status(400).send({ error: 'Could not sign in' });
+                  }
+                } catch (e) {
+                  return res
+                    .status(400)
+                    .send({ error: (e as TypeError).message });
+                }
               }
             } else {
               res.status(400).send({ error: 'Incorrect password' });
@@ -134,19 +140,7 @@ export class UsersController {
       res.status(400).send({ token: (userData as Error).message, status: 400 });
     } else {
       if (userData) {
-        const key = this.configService.get<string>('TOKEN_KEY');
-        try {
-          const payload = jwt.verify(userData.token, key);
-          if (Date.now() >= payload.exp * 1000) {
-            res.status(400).send({ token: 'Token has expired', status: 400 });
-          } else if (!payload.loggedIn) {
-            res.status(400).send({ token: 'User has signed out', status: 400 });
-          } else {
-            res.status(200).send({ token: userData.token, status: 200 });
-          }
-        } catch (err) {
-          res.status(400).send({ token: 'Invalid Token', status: 400 });
-        }
+        validateToken(userData, res, true);
       }
     }
   }
@@ -160,22 +154,29 @@ export class UsersController {
     } else {
       if (userData) {
         const key = this.configService.get<string>('TOKEN_KEY');
-        const payload = jwt.verify(userData.token, key);
-        const role = payload.role;
-        userData.token = jwt.sign(
-          {
-            userName: userName,
-            password: userData.password,
-            role: role,
-            loggedIn: false,
-          },
-          key,
-        );
-        try {
-          await this.usersService.updateUser(userName, userData);
-          res.status(200).send('User signed out');
-        } catch (err) {
-          res.status(400).send({ error: 'Error signing out user' });
+        const payload = validateToken(userData, res, false);
+        if (payload != null) {
+          const role = payload.role;
+          userData.token = jwt.sign(
+            {
+              userName: userName,
+              password: userData.password,
+              role: role,
+              loggedIn: false,
+            },
+            key,
+          );
+          try {
+            await validatorDto(UserDto, userData);
+            try {
+              await this.usersService.updateUser(userName, userData);
+              res.status(200).send('User signed out');
+            } catch (err) {
+              res.status(400).send({ error: 'Error signing out user' });
+            }
+          } catch (e) {
+            return res.status(400).send({ error: (e as TypeError).message });
+          }
         }
       }
     }

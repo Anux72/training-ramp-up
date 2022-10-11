@@ -20,7 +20,6 @@ export class StudentsService {
       await this.dataSource.manager.save(Student, newStudent);
       return `Student added to database`;
     } catch (e) {
-      console.log(e);
       return Error('Error adding student');
     }
   }
